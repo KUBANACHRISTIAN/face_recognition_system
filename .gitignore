@@ -1,0 +1,26 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Model binaries (automatically downloaded on first run via download_models.py)
+models/*.onnx
+
+# Database cache (automatically rebuilt if missing)
+database/*.pkl
+
+# Generated outputs
+output/*.jpg
+output/*.png
+output/*.mp4
+!output/.gitkeep
+
+# OS generated files
+.DS_Store
+Thumbs.db
