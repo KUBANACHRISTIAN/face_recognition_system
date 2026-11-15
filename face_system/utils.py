@@ -10,10 +10,22 @@ MODELS = {
 }
 
 
+def get_default_models_dir() -> str:
+    """Returns local models directory or /tmp/models if running in read-only serverless."""
+    base_models = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
+    if os.path.exists(base_models):
+        return base_models
+
+    # Fallback to /tmp if base directory cannot be written to
+    tmp_models = os.path.join("/tmp", "models")
+    os.makedirs(tmp_models, exist_ok=True)
+    return tmp_models
+
+
 def ensure_models_exist(models_dir: Optional[str] = None):
     """Verifies that model and cascade files exist on disk, downloading if missing."""
     if models_dir is None:
-        models_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
+        models_dir = get_default_models_dir()
 
     os.makedirs(models_dir, exist_ok=True)
 
@@ -35,7 +47,6 @@ def open_camera(preferred_index: int = 0, width: int = 1280, height: int = 720) 
     indices_to_try = [preferred_index] + [i for i in [0, 1, 2] if i != preferred_index]
 
     for idx in indices_to_try:
-        # Use CAP_DSHOW on Windows for fast webcam initialization
         cap = cv2.VideoCapture(idx, cv2.CAP_DSHOW) if os.name == 'nt' else cv2.VideoCapture(idx)
         if cap.isOpened():
             ret, _ = cap.read()

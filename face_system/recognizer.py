@@ -109,12 +109,19 @@ class FaceDatabase:
         if known_faces_dir is None:
             known_faces_dir = os.path.join(base_dir, "known_faces")
         if cache_path is None:
-            cache_path = os.path.join(base_dir, "database", "embeddings.pkl")
+            # If base directory is not writable (e.g. serverless runtime), use /tmp
+            if not os.access(base_dir, os.W_OK):
+                cache_path = os.path.join("/tmp", "database", "embeddings.pkl")
+            else:
+                cache_path = os.path.join(base_dir, "database", "embeddings.pkl")
 
         self.known_faces_dir = known_faces_dir
         self.cache_path = cache_path
-        os.makedirs(self.known_faces_dir, exist_ok=True)
-        os.makedirs(os.path.dirname(self.cache_path), exist_ok=True)
+        try:
+            os.makedirs(self.known_faces_dir, exist_ok=True)
+            os.makedirs(os.path.dirname(self.cache_path), exist_ok=True)
+        except OSError:
+            pass
 
         self.recognizer = recognizer if recognizer else FaceRecognizer()
         self.detector = detector if detector else YuNetDetector(
