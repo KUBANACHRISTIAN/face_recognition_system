@@ -304,6 +304,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
+@app.middleware("http")
+async def fix_vercel_path_middleware(request, call_next):
+    """Normalizes request path if Vercel serverless rewrites prepend filename."""
+    raw_path = request.scope.get("path", "")
+    for prefix in ["/main.py", "/api/index.py", "/index.py"]:
+        if raw_path == prefix:
+            request.scope["path"] = "/"
+            break
+        elif raw_path.startswith(prefix + "/"):
+            request.scope["path"] = raw_path[len(prefix):]
+            break
+    return await call_next(request)
+
+
 # Lazy singleton engine instance for web requests
 _engine: Optional[FaceRecognitionApp] = None
 
@@ -337,6 +352,8 @@ def decode_base64_image(data_url: str) -> Optional[np.ndarray]:
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/main.py", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
 async def serve_index():
     """Serves the interactive web webcam & image analysis dashboard."""
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
@@ -348,6 +365,8 @@ async def serve_index():
 
 @app.get("/health")
 @app.get("/api/health")
+@app.get("/main.py/health")
+@app.get("/api/index.py/health")
 async def health_check():
     engine = get_engine()
     return {
